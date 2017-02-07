@@ -60,5 +60,5 @@ def processFile( sftp, f ):
     log.info( '--> Uploading %s to S3 bucket (%s)' % ( f.filename, s3_bucket ) )
     s3.upload_file( local_file, s3_bucket, f.filename )
     log.info( '--> Cleaning up %s on SFTP server and locally' % f.filename )
-    # os.remove( local_file )
-    # sftp.remove( f.filename )
+    os.remove( local_file )
+    sftp.remove( f.filename )
