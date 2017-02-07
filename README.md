@@ -24,9 +24,16 @@ docker run -it --rm -v ~/:/output lambda-python-pysftp bash -c "cd /release; zip
 
 ### Environment variables
 
+- `PROCESS_LATEST_ONLY` : **OPTIONAL** Choose whether to process all files or the most recent one only (defaults to: False)
 - `S3_BUCKET` : **MANDATORY** This is the name of the destination bucket
 - `SFTP_PORT` : **MANDATORY** SFTP server TCP port
 - `SFTP_HOST` : **MANDATORY** SFTP server hostname
 - `SFTP_USERNAME` : **MANDATORY** SFTP server username
 - `SFTP_PASSWORD` : **MANDATORY** *ENCRYPTED* SFTP server password
 - `SFTP_KNOWNHOSTS_FILE` : **MANDATORY** _ENCRYPTED_ SFTP server signature
+
+### Find the SFTP server signature
+
+```bash
+ssh-keyscan  2>/dev/null
+```
