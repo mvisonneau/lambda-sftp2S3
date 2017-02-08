@@ -23,7 +23,11 @@ sftp_config = {
     'cnopts'   : cnopts
 }
 
-processLatestOnly = os.environ.get('PROCESS_LATEST_ONLY') or False
+def str2bool( v ):
+  return v.lower() in ( 'true' )
+
+processLatestOnly = str2bool( os.environ.get('PROCESS_LATEST_ONLY') )
+cleanSftpFiles = str2bool( os.environ.get('CLEAN_SFTP_FILES') )
 
 ## S3 CONFIG
 s3_bucket = os.environ['S3_BUCKET']
@@ -42,7 +46,11 @@ def sftp2S3( evt, cxt ):
             log.debug( '-> Comparing %s' % f.filename )
             if latest_file is None or f.st_mtime > latest_file.st_mtime:
                 log.debug( '-> %s is the most recent so far' % f.filename )
+                if latest_file is not None and cleanSftpFiles:
+                    deleteSftpFile( sftp, latest_file )
                 latest_file = f
+            elif cleanSftpFiles:
+                deleteSftpFile( sftp, f )
         if latest_file is not None:
             processFile( sftp, s3, latest_file )
     else:
@@ -53,12 +61,17 @@ def sftp2S3( evt, cxt ):
     log.info( '-> All set ! exiting..' )
     sftp.close()
 
-def processFile( sftp, f ):
+def processFile( sftp, s3, f ):
     local_file = '/tmp/' + f.filename
     log.info( '--> Downloading %s from SFTP server' % f.filename )
     sftp.get( f.filename, local_file )
     log.info( '--> Uploading %s to S3 bucket (%s)' % ( f.filename, s3_bucket ) )
     s3.upload_file( local_file, s3_bucket, f.filename )
-    log.info( '--> Cleaning up %s on SFTP server and locally' % f.filename )
+    log.info( '--> Cleaning up %s locally' % f.filename )
     os.remove( local_file )
+    if cleanSftpFiles:
+        deleteSftpFile( sftp, f )
+
+def deleteSftpFile( sftp, f ):
+    log.info( '--> Cleaning up %s on SFTP server' % f.filename )
     sftp.remove( f.filename )
